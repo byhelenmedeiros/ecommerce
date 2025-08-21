@@ -19,6 +19,25 @@ enum Role {
   customer
 }
 
+enum ProductKind {
+  apparel // roupa
+  shoes // calçado
+  accessory // acessórios
+}
+
+enum Target {
+  men
+  women
+  unisex
+}
+
+enum SizeSystem {
+  alpha // XS,S,M,L,XL...
+  EU // 36..46
+  US
+  UK
+}
+
 // ===============================
 // UTILIZADORES & MORADAS
 // ===============================
@@ -66,15 +85,20 @@ model Category {
 }
 
 model Product {
-  id          String    @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
-  slug        String    @unique
+  slug        String  @unique
   description String?
-  active      Boolean   @default(true)
-  categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  active      Boolean @default(true)
+
+  kind      ProductKind @default(apparel) // roupa, calçado, acessório
+  target    Target      @default(unisex) // homem, mulher, unissex
+  sizeGuide Json? // guia/tabela de tamanhos opcional
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   variants ProductVariant[]
   images   ProductImage[]
@@ -83,21 +107,45 @@ model Product {
   // back-relations necessários para Review/Wishlist
   reviews   Review[]
   wishlists Wishlist[]
+
+  @@index([kind])
+  @@index([target])
 }
 
 model ProductVariant {
-  id         String  @id @default(cuid())
-  productId  String
-  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  sku        String  @unique
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sku        String @unique
   priceCents Int
   stock      Int
-  attrs      Json // ex.: { color: "Blue", size: "M" }
+
+  color      String?
+  size       String?
+  sizeSystem SizeSystem?
+
+  attrs Json // extra se precisares, continua disponível
 
   cartItems  CartItem[]
   orderItems OrderItem[]
+  images     VariantImage[] //  imagens específicas da variante (ex.: cor)
 
+  @@unique([productId, color, size]) // evita duplicar a mesma combinação
   @@index([productId])
+  @@index([color])
+  @@index([size])
+}
+
+model VariantImage {
+  id        String         @id @default(cuid())
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sort      Int            @default(0)
+
+  @@index([variantId])
 }
 
 model ProductImage {
