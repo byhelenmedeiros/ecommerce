@@ -18,3 +18,8 @@ export function getProducts(params = {}) {
 export function getProduct(slug) {
   return jfetch(`${API}/catalog/products/${slug}`);
 }
+export function getCart(sessionId) { return jfetch(`${API}/cart?sessionId=${encodeURIComponent(sessionId)}`); }
+export function addToCart(body) {
+  return jfetch(`${API}/cart/add`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+}
+
