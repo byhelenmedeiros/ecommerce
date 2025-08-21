@@ -121,17 +121,19 @@ model ProductVariant {
   priceCents Int
   stock      Int
 
+  promoPriceCents Int?
+
   color      String?
   size       String?
   sizeSystem SizeSystem?
 
-  attrs Json // extra se precisares, continua disponível
+  attrs Json
 
   cartItems  CartItem[]
   orderItems OrderItem[]
-  images     VariantImage[] //  imagens específicas da variante (ex.: cor)
+  images     VariantImage[]
 
-  @@unique([productId, color, size]) // evita duplicar a mesma combinação
+  @@unique([productId, color, size])
   @@index([productId])
   @@index([color])
   @@index([size])
