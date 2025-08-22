@@ -67,14 +67,19 @@ export default function ProductView({ product }) {
   );
   const inStock = (currentVariant?.stock ?? 0) > 0;
 
-  // preço / promo
-  const priceCents = currentVariant?.priceCents ?? 0;
-  const promoCents =
-    currentVariant?.promoPriceCents ??
-    currentVariant?.attrs?.promoPriceCents ??
-    null;
-  const hasPromo = promoCents != null && promoCents < priceCents;
-  const discountPct = hasPromo ? Math.round((1 - promoCents / priceCents) * 100) : 0;
+  // preços com regras
+  const priceCents = Number.isFinite(currentVariant?.priceCents) ? currentVariant.priceCents : null;
+  const rawPromo =
+    Number.isFinite(currentVariant?.promoPriceCents)
+      ? currentVariant.promoPriceCents
+      : (Number.isFinite(currentVariant?.attrs?.promoPriceCents)
+          ? currentVariant.attrs.promoPriceCents
+          : null);
+
+  const hasPromo = Number.isFinite(rawPromo) && Number.isFinite(priceCents) && rawPromo < priceCents;
+  const promoCents = hasPromo ? rawPromo : null;
+  const discountPct =
+    hasPromo && priceCents > 0 ? Math.max(0, Math.round(((priceCents - promoCents) / priceCents) * 100)) : 0;
 
   return (
     <div className="space-y-4">
@@ -110,7 +115,8 @@ export default function ProductView({ product }) {
           <img src={cover} alt={product.name} className="w-full rounded-xl border" />
           <div className="mt-3 flex gap-2 overflow-x-auto">
             {gallery.map((img, i) => (
-               <img
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 key={img.id ?? i}
                 src={img.url}
                 alt={img.alt || ''}
@@ -137,7 +143,7 @@ export default function ProductView({ product }) {
               aria-label={wished ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
               title={wished ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
               onClick={toggleWish}
-              className="p-2   hover:bg-gray-50"
+              className="p-2 rounded-full hover:bg-gray-100"
             >
               <FontAwesomeIcon
                 icon={wished ? faHeartSolid : faHeartRegular}
@@ -151,18 +157,26 @@ export default function ProductView({ product }) {
           <div className="mt-3 flex items-center gap-3">
             {hasPromo ? (
               <>
+                {/* só promo + normal riscado */}
                 <div className="text-2xl font-semibold text-red-600">
                   {formatEUR(promoCents)}
                 </div>
-                <div className="text-sm line-through text-gray-500">
-                  {formatEUR(priceCents)}
-                </div>
-                <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                  -{discountPct}%
-                </span>
+                {Number.isFinite(priceCents) && (
+                  <div className="text-sm line-through text-gray-500">
+                    {formatEUR(priceCents)}
+                  </div>
+                )}
+                {discountPct > 0 && (
+                  <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                    -{discountPct}%
+                  </span>
+                )}
               </>
             ) : (
-              <div className="text-2xl font-semibold">{formatEUR(priceCents)}</div>
+              // sem promo: apenas o preço normal
+              Number.isFinite(priceCents) && (
+                <div className="text-2xl font-semibold">{formatEUR(priceCents)}</div>
+              )
             )}
 
             <span

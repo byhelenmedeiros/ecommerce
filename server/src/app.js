@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
 import catalogRoutes from './routes/catalog.routes.js'; 
+import wishlistRoutes from './routes/wishlist.routes.js'
 
 export function createApp() {
   const app = express();
@@ -20,6 +21,9 @@ export function createApp() {
 
   // 404
   app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
+
+  //wishlist
+  app.use(wishlistRoutes);
 
  
   app.use((err, _req, res, _next) => {
