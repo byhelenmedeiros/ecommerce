@@ -26,8 +26,6 @@ export function optionalAuth(req, _res, next) {
       const userId = payload.sub || payload.id || payload.userId;
       if (userId) req.user = { id: userId };
     }
-  } catch {
-    
-  }
+  } catch {}
   next();
 }

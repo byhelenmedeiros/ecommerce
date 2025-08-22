@@ -50,6 +50,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+   emailVerifiedAt      DateTime?
+  resetToken           String?
+  resetTokenExpiresAt  DateTime?
+
   addresses Address[]
   carts     Cart[]
   orders    Order[]

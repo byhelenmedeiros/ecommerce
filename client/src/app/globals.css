@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* === Top Bar Ticker === */
+@keyframes topbar-ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.topbar-ticker { overflow: hidden; white-space: nowrap; }
+.topbar-track { display: inline-block; will-change: transform; animation: topbar-ticker 28s linear infinite; }
+.topbar-ticker:hover .topbar-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .topbar-track { animation: none !important; }
+}

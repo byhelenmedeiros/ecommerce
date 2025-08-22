@@ -8,6 +8,11 @@ import VariantSelector from '@/components/VariantSelector';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
+import { getWishlistIds, addWishlist, removeWishlist } from '@/lib/api';
+import { isLoggedIn } from '@/lib/auth';
+import { migrateWishlist } from '@/lib/api';
+
+
 
 // util local p/ dinheiro
 const formatEUR = (cents) =>
@@ -25,26 +30,56 @@ export default function ProductView({ product }) {
 
   // wishlist local (persistido em localStorage)
   const [wished, setWished] = useState(false);
-  useEffect(() => {
+useEffect(() => {
+  let mounted = true;
+  (async () => {
     try {
-      const wl = JSON.parse(localStorage.getItem('wishlist') || '[]');
-      setWished(wl.includes(product.id));
+      if (isLoggedIn()) {
+        const { ids } = await getWishlistIds();
+        if (mounted) setWished(ids.includes(product.id));
+      } else {
+        const wl = JSON.parse(localStorage.getItem('wishlist') || '[]');
+        if (mounted) setWished(wl.includes(product.id));
+      }
     } catch {}
-  }, [product.id]);
+  })();
+  return () => { mounted = false; };
+}, [product.id]);
 
-  function toggleWish() {
-    try {
-      const wl = new Set(JSON.parse(localStorage.getItem('wishlist') || '[]'));
-      if (wl.has(product.id)) {
-        wl.delete(product.id);
+async function toggleWish() {
+  try {
+    if (isLoggedIn()) {
+      if (wished) {
+        await removeWishlist(product.id);
         setWished(false);
       } else {
-        wl.add(product.id);
+        await addWishlist(product.id);
         setWished(true);
       }
-      localStorage.setItem('wishlist', JSON.stringify([...wl]));
-    } catch {}
+    } else {
+      const set = new Set(JSON.parse(localStorage.getItem('wishlist') || '[]'));
+      if (set.has(product.id)) {
+        set.delete(product.id);
+        setWished(false);
+      } else {
+        set.add(product.id);
+        setWished(true);
+      }
+      localStorage.setItem('wishlist', JSON.stringify([...set]));
+    }
+  } catch (e) {
+    alert('Não foi possível atualizar favoritos.');
   }
+}
+
+
+async function onLoginSuccess() {
+  const guest = JSON.parse(localStorage.getItem('wishlist') || '[]');
+  if (guest.length) {
+    await migrateWishlist(guest);
+    localStorage.removeItem('wishlist');
+  }
+}
 
   // galeria por cor
   const gallery = useMemo(() => {
