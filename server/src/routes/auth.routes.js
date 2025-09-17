@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 
+
 const prisma = new PrismaClient();
 const router = Router();
 
@@ -134,5 +135,20 @@ router.post('/auth/password/reset', async (req, res) => {
   });
   res.json({ ok: true });
 });
+
+
+
+export async function login(req, res) {
+  const { email, password } = req.body;
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const ok = await bcrypt.compare(password, user.password).catch(() => false);
+  if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const token = jwt.sign({ sub: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+  res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 7*24*60*60*1000 });
+  res.json({ user: { id: user.id, email: user.email, role: user.role, name: user.name } });
+}
 
 export default router;

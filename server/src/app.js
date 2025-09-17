@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
+
 import catalogRoutes from './routes/catalog.routes.js'; 
 import wishlistRoutes from './routes/wishlist.routes.js'
 import authRoutes from './routes/auth.routes.js'
